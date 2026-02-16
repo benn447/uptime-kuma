@@ -1,0 +1,206 @@
+# Default values for uptime-kuma.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Deployment mode: true = Deployment, false = StatefulSet
+useDeploy: true
+
+replicaCount: 1
+
+image:
+  repository: louislam/uptime-kuma
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "2"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+
+service:
+  type: ClusterIP
+  port: 3001
+  # For NodePort service type, specify the nodePort
+  nodePort: null
+  # Session affinity is critical for WebSocket support
+  sessionAffinity: ClientIP
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations:
+    # WebSocket support annotations for nginx ingress
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/server-snippets: |
+      location / {
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+      }
+  hosts:
+    - host: uptime-kuma.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: uptime-kuma-tls
+  #    hosts:
+  #      - uptime-kuma.local
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+# Liveness probe - uses healthcheck binary
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 180
+  periodSeconds: 60
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# Readiness probe - HTTP check
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# Startup probe - allows for slow initial startup
+startupProbe:
+  enabled: true
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
+
+persistence:
+  enabled: true
+  # existingClaim: ""
+  storageClassName: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 4Gi
+  annotations: {}
+
+# Environment variables for uptime-kuma configuration
+env: []
+  # - name: UPTIME_KUMA_PORT
+  #   value: "3001"
+  # - name: NODE_ENV
+  #   value: "production"
+  # Database configuration example:
+  # - name: UPTIME_KUMA_DB_TYPE
+  #   value: "mariadb"
+  # - name: UPTIME_KUMA_DB_HOSTNAME
+  #   value: "mariadb.database.svc.cluster.local"
+  # - name: UPTIME_KUMA_DB_PORT
+  #   value: "3306"
+  # - name: UPTIME_KUMA_DB_NAME
+  #   value: "uptime_kuma"
+  # - name: UPTIME_KUMA_DB_USERNAME
+  #   value: "uptime"
+  # - name: UPTIME_KUMA_DB_PASSWORD
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: mariadb-secret
+  #       key: password
+
+# Environment variables from secrets or configmaps
+envFrom: []
+  # - secretRef:
+  #     name: uptime-kuma-secrets
+  # - configMapRef:
+  #     name: uptime-kuma-config
+
+# Additional volumes
+volumes: []
+  # - name: config
+  #   configMap:
+  #     name: uptime-kuma-config
+
+# Additional volume mounts
+volumeMounts: []
+  # - name: config
+  #   mountPath: /app/config
+  #   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# DNS policy for the pod
+dnsPolicy: ""
+
+# Priority class name
+priorityClassName: ""
+
+# ServiceMonitor for Prometheus Operator
+serviceMonitor:
+  enabled: false
+  interval: 30s
+  scrapeTimeout: 10s
+  # Path to scrape metrics from
+  path: /metrics
+  # Additional labels for ServiceMonitor
+  labels: {}
+  # TLS configuration
+  scheme: http
+  tlsConfig: {}
+
+# NetworkPolicy configuration
+networkPolicy:
+  enabled: false
+  policyTypes:
+    - Ingress
+    - Egress
+  # Allow external traffic
+  allowExternal: true
+  ingress: []
+  # - from:
+  #   - namespaceSelector:
+  #       matchLabels:
+  #         name: ingress-nginx
+  egress: []
+  # - to:
+  #   - namespaceSelector: {}
+  #   ports:
+  #   - protocol: TCP
+  #     port: 53
+  #   - protocol: UDP
+  #     port: 53
