@@ -351,6 +351,11 @@ let needSetup = false;
     const apiRouter = require("./routers/api-router");
     app.use(apiRouter);
 
+    // REST API Router (v1)
+    const { createRESTAPIRouter } = require("./routers/rest-api-router");
+    const restAPIRouter = createRESTAPIRouter({ io });
+    app.use("/api/v1", restAPIRouter);
+
     // Status Page Router
     const statusPageRouter = require("./routers/status-page-router");
     app.use(statusPageRouter);

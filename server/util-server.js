@@ -985,3 +985,13 @@ async function commandExists(command) {
     }
 }
 module.exports.commandExists = commandExists;
+
+/**
+ * Generate a secure random API key
+ * @returns {string} Generated API key
+ */
+function generateAPIKey() {
+    const crypto = require("crypto");
+    return "uk_" + crypto.randomBytes(32).toString("base64url");
+}
+module.exports.generateAPIKey = generateAPIKey;
