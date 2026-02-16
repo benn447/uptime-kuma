@@ -1,0 +1,16 @@
+apiVersion: v2
+name: uptime-kuma-operator
+description: Kubernetes operator for Uptime Kuma monitoring
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - monitoring
+  - uptime
+  - kubernetes
+  - operator
+home: https://github.com/benn447/uptime-kuma
+sources:
+  - https://github.com/benn447/uptime-kuma
+maintainers:
+  - name: Ben

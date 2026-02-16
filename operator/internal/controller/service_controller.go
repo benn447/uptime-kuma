@@ -123,7 +123,7 @@ func (r *ServiceReconciler) ensureMonitor(ctx context.Context, service *corev1.S
 				Name:      monitorName,
 				Namespace: service.Namespace,
 				Labels: map[string]string{
-					"app.kubernetes.io/managed-by": "uptime-kuma-operator",
+					"app.kubernetes.io/managed-by":    "uptime-kuma-operator",
 					"monitoring.uptimekuma.io/source": "service-discovery",
 				},
 			},

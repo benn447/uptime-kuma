@@ -1,0 +1,28 @@
+Uptime Kuma Operator has been installed!
+
+1. Check the operator is running:
+   kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "uptime-kuma-operator.name" . }}
+
+2. Create an API key secret:
+   kubectl create secret generic uptime-kuma-api-key \
+     --from-literal=api-key=YOUR_API_KEY \
+     --namespace YOUR_NAMESPACE
+
+3. Create an UptimeKumaConfig:
+   kubectl apply -f - <<EOF
+   apiVersion: monitoring.uptimekuma.io/v1alpha1
+   kind: UptimeKumaConfig
+   metadata:
+     name: uptime-kuma
+     namespace: YOUR_NAMESPACE
+   spec:
+     apiUrl: http://uptime-kuma:3001
+     apiKeySecret:
+       name: uptime-kuma-api-key
+       key: api-key
+   EOF
+
+4. Create monitors or enable service discovery!
+
+For more information, see the README.md or visit:
+https://github.com/benn447/uptime-kuma

@@ -46,12 +46,12 @@ type Tag struct {
 
 // MonitorStatus represents the status and statistics of a monitor
 type MonitorStatus struct {
-	Status       string        `json:"status"`
-	Uptime24h    *float64      `json:"uptime24h,omitempty"`
-	Uptime30d    *float64      `json:"uptime30d,omitempty"`
-	Uptime1y     *float64      `json:"uptime1y,omitempty"`
-	AvgPing24h   *float64      `json:"avgPing24h,omitempty"`
-	LatestBeat   *Heartbeat    `json:"latestHeartbeat,omitempty"`
+	Status     string     `json:"status"`
+	Uptime24h  *float64   `json:"uptime24h,omitempty"`
+	Uptime30d  *float64   `json:"uptime30d,omitempty"`
+	Uptime1y   *float64   `json:"uptime1y,omitempty"`
+	AvgPing24h *float64   `json:"avgPing24h,omitempty"`
+	LatestBeat *Heartbeat `json:"latestHeartbeat,omitempty"`
 }
 
 // Heartbeat represents a heartbeat/check result
