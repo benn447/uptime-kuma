@@ -25,21 +25,64 @@ import (
 
 // UptimeKumaGroupSpec defines the desired state of UptimeKumaGroup
 type UptimeKumaGroupSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// GroupName is the display name for the group in Uptime Kuma
+	// Defaults to the CR name if not specified
+	// +optional
+	GroupName string `json:"groupName,omitempty"`
 
-	// Foo is an example field of UptimeKumaGroup. Edit uptimekumagroup_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Description of the group
+	// +optional
+	Description string `json:"description,omitempty"`
+
+	// Weight for ordering groups (lower numbers appear first)
+	// +kubebuilder:default=1000
+	// +optional
+	Weight int `json:"weight,omitempty"`
+
+	// ParentGroup references another UptimeKumaGroup to create nested groups
+	// +optional
+	ParentGroup string `json:"parentGroup,omitempty"`
+
+	// NamespaceSelector selects namespaces to automatically create groups for
+	// When specified, a group will be created for each matching namespace
+	// +optional
+	NamespaceSelector *metav1.LabelSelector `json:"namespaceSelector,omitempty"`
+
+	// UptimeKumaConfigRef references the UptimeKumaConfig to use
+	// +optional
+	UptimeKumaConfigRef string `json:"uptimeKumaConfigRef,omitempty"`
 }
 
 // UptimeKumaGroupStatus defines the observed state of UptimeKumaGroup
 type UptimeKumaGroupStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// GroupID is the ID of the group in Uptime Kuma
+	// +optional
+	GroupID int `json:"groupId,omitempty"`
+
+	// MonitorCount is the number of monitors in this group
+	// +optional
+	MonitorCount int `json:"monitorCount,omitempty"`
+
+	// LastSyncTime is the last time the group was synced
+	// +optional
+	LastSyncTime *metav1.Time `json:"lastSyncTime,omitempty"`
+
+	// Conditions represent the latest available observations of the group's state
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// ObservedGeneration reflects the generation of the most recently observed spec
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:resource:scope=Namespaced,shortName=ukg
+//+kubebuilder:printcolumn:name="Group ID",type=integer,JSONPath=`.status.groupId`
+//+kubebuilder:printcolumn:name="Monitors",type=integer,JSONPath=`.status.monitorCount`
+//+kubebuilder:printcolumn:name="Parent",type=string,JSONPath=`.spec.parentGroup`
+//+kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // UptimeKumaGroup is the Schema for the uptimekumagroups API
 type UptimeKumaGroup struct {

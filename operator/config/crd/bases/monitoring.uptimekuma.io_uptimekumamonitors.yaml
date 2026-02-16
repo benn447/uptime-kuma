@@ -1,0 +1,363 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.14.0
+  name: uptimekumamonitors.monitoring.uptimekuma.io
+spec:
+  group: monitoring.uptimekuma.io
+  names:
+    kind: UptimeKumaMonitor
+    listKind: UptimeKumaMonitorList
+    plural: uptimekumamonitors
+    singular: uptimekumamonitor
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.monitorType
+      name: Type
+      type: string
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .status.monitorId
+      name: Monitor ID
+      type: integer
+    - jsonPath: .status.uptimeStats.uptime24h
+      name: Uptime 24h
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: UptimeKumaMonitor is the Schema for the uptimekumamonitors API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: UptimeKumaMonitorSpec defines the desired state of UptimeKumaMonitor
+            properties:
+              active:
+                default: true
+                description: Active determines if the monitor should be running
+                type: boolean
+              autoDiscovery:
+                description: AutoDiscovery configuration for creating monitors from
+                  Kubernetes Services
+                properties:
+                  enabled:
+                    default: true
+                    description: Enabled determines if auto-discovery is enabled
+                    type: boolean
+                  path:
+                    default: /
+                    description: Path to append to the URL (for HTTP monitors)
+                    type: string
+                  portName:
+                    description: PortName specifies which service port to monitor
+                      (e.g., "http", "https")
+                    type: string
+                  portNumber:
+                    description: PortNumber specifies a specific port number to monitor
+                    type: integer
+                  selector:
+                    description: Selector to match Kubernetes Services
+                    properties:
+                      matchExpressions:
+                        description: matchExpressions is a list of label selector
+                          requirements. The requirements are ANDed.
+                        items:
+                          description: |-
+                            A label selector requirement is a selector that contains values, a key, and an operator that
+                            relates the key and values.
+                          properties:
+                            key:
+                              description: key is the label key that the selector
+                                applies to.
+                              type: string
+                            operator:
+                              description: |-
+                                operator represents a key's relationship to a set of values.
+                                Valid operators are In, NotIn, Exists and DoesNotExist.
+                              type: string
+                            values:
+                              description: |-
+                                values is an array of string values. If the operator is In or NotIn,
+                                the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                the values array must be empty. This array is replaced during a strategic
+                                merge patch.
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - key
+                          - operator
+                          type: object
+                        type: array
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                          map is equivalent to an element of matchExpressions, whose key field is "key", the
+                          operator is "In", and the values array contains only "value". The requirements are ANDed.
+                        type: object
+                    type: object
+                    x-kubernetes-map-type: atomic
+                required:
+                - enabled
+                type: object
+              description:
+                description: Description of the monitor
+                type: string
+              group:
+                description: Group name to organize monitors (maps to parent group
+                  in Uptime Kuma)
+                type: string
+              hostname:
+                description: Hostname or IP address (for tcp/ping monitors)
+                type: string
+              http:
+                description: Advanced HTTP options
+                properties:
+                  acceptedStatusCodes:
+                    description: AcceptedStatusCodes defines which HTTP status codes
+                      are considered successful
+                    items:
+                      type: string
+                    type: array
+                  body:
+                    description: Body to send with POST/PUT requests
+                    type: string
+                  followRedirects:
+                    default: true
+                    description: FollowRedirects determines if redirects should be
+                      followed
+                    type: boolean
+                  headers:
+                    additionalProperties:
+                      type: string
+                    description: Headers to send with the request
+                    type: object
+                  method:
+                    default: GET
+                    description: Method is the HTTP method to use
+                    enum:
+                    - GET
+                    - POST
+                    - PUT
+                    - PATCH
+                    - DELETE
+                    - HEAD
+                    - OPTIONS
+                    type: string
+                  timeout:
+                    default: 30
+                    description: Timeout in seconds
+                    type: integer
+                type: object
+              interval:
+                default: 60
+                description: Interval in seconds between checks
+                minimum: 20
+                type: integer
+              maxRetries:
+                default: 3
+                description: MaxRetries before marking monitor as down
+                type: integer
+              monitorType:
+                description: MonitorType specifies the type of monitor (http, tcp,
+                  ping, dns, etc.)
+                enum:
+                - http
+                - https
+                - tcp
+                - ping
+                - dns
+                - docker
+                - push
+                - steam
+                - gamedig
+                - mqtt
+                - sqlserver
+                - postgres
+                - mysql
+                - mongodb
+                - radius
+                - redis
+                - group
+                - grpc-keyword
+                - json-query
+                - real-browser
+                - kafka-producer
+                - tailscale-ping
+                type: string
+              name:
+                description: Name of the monitor (defaults to CR name if not specified)
+                type: string
+              port:
+                description: Port number (for tcp monitors)
+                type: integer
+              retryInterval:
+                default: 60
+                description: RetryInterval in seconds for retrying failed checks
+                type: integer
+              tags:
+                description: Tags to apply to the monitor
+                items:
+                  description: MonitorTag represents a key-value tag for a monitor
+                  properties:
+                    color:
+                      description: Color for the tag (hex color code)
+                      type: string
+                    name:
+                      description: Name of the tag (the key)
+                      type: string
+                    value:
+                      description: Value of the tag
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              uptimeKumaConfigRef:
+                description: |-
+                  UptimeKumaConfigRef references the UptimeKumaConfig to use for this monitor
+                  If not specified, uses the default config in the same namespace
+                type: string
+              url:
+                description: URL to monitor (for http/https monitors)
+                type: string
+            required:
+            - monitorType
+            type: object
+          status:
+            description: UptimeKumaMonitorStatus defines the observed state of UptimeKumaMonitor
+            properties:
+              conditions:
+                description: Conditions represent the latest available observations
+                  of the monitor's state
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource.\n---\nThis struct is intended for
+                    direct use as an array at the field path .status.conditions.  For
+                    example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
+                    observations of a foo's current state.\n\t    // Known .status.conditions.type
+                    are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
+                    +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
+                    \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
+                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
+                    \   // other fields\n\t}"
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        ---
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+                        useful (see .node.status.conditions), the ability to deconflict is important.
+                        The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              lastSyncTime:
+                description: LastSyncTime is the last time the monitor was synced
+                  with Uptime Kuma
+                format: date-time
+                type: string
+              monitorId:
+                description: MonitorID is the ID of the monitor in Uptime Kuma
+                type: integer
+              observedGeneration:
+                description: ObservedGeneration reflects the generation of the most
+                  recently observed spec
+                format: int64
+                type: integer
+              status:
+                description: Status represents the current status of the monitor (up,
+                  down, pending, etc.)
+                type: string
+              uptimeStats:
+                description: UptimeStats contains uptime statistics
+                properties:
+                  avgPing:
+                    description: AvgPing is the average response time in milliseconds
+                    type: number
+                  uptime24h:
+                    description: Uptime24h is the uptime percentage over the last
+                      24 hours
+                    type: number
+                  uptime30d:
+                    description: Uptime30d is the uptime percentage over the last
+                      30 days
+                    type: number
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
