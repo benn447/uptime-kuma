@@ -10,7 +10,7 @@
 
 const Database = require("../server/database");
 const { R } = require("redbean-node");
-const { APIKey } = require("../server/model/api-key");
+const { APIKey } = require("../server/model/api_key");
 const axios = require("axios");
 
 const API_BASE_URL = "http://localhost:3001/api/v1";

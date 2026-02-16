@@ -1,4 +1,4 @@
-const { APIKey } = require("../model/api-key");
+const { APIKey } = require("../model/api_key");
 const { R } = require("redbean-node");
 
 /**
