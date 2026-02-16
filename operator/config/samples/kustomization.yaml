@@ -1,0 +1,6 @@
+## Append samples of your project ##
+resources:
+- monitoring_v1alpha1_uptimekumamonitor.yaml
+- monitoring_v1alpha1_uptimekumaconfig.yaml
+- monitoring_v1alpha1_uptimekumagroup.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples

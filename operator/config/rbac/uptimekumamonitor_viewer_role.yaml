@@ -1,0 +1,27 @@
+# permissions for end users to view uptimekumamonitors.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: uptimekumamonitor-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: uptime-kuma-operator
+    app.kubernetes.io/part-of: uptime-kuma-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: uptimekumamonitor-viewer-role
+rules:
+- apiGroups:
+  - monitoring.uptimekuma.io
+  resources:
+  - uptimekumamonitors
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - monitoring.uptimekuma.io
+  resources:
+  - uptimekumamonitors/status
+  verbs:
+  - get

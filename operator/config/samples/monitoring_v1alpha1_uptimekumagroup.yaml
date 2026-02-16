@@ -1,0 +1,12 @@
+apiVersion: monitoring.uptimekuma.io/v1alpha1
+kind: UptimeKumaGroup
+metadata:
+  labels:
+    app.kubernetes.io/name: uptimekumagroup
+    app.kubernetes.io/instance: uptimekumagroup-sample
+    app.kubernetes.io/part-of: uptime-kuma-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: uptime-kuma-operator
+  name: uptimekumagroup-sample
+spec:
+  # TODO(user): Add fields here
