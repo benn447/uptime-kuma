@@ -1,0 +1,19 @@
+apiVersion: v2
+name: uptime-kuma
+description: A fancy self-hosted monitoring tool
+type: application
+version: 1.0.0
+appVersion: "2.1.1"
+keywords:
+  - monitoring
+  - uptime
+  - websocket
+  - self-hosted
+  - healthcheck
+home: https://github.com/louislam/uptime-kuma
+sources:
+  - https://github.com/louislam/uptime-kuma
+maintainers:
+  - name: louislam
+    url: https://github.com/louislam
+icon: https://raw.githubusercontent.com/louislam/uptime-kuma/master/public/icon.png
