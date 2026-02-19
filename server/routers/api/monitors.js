@@ -3,9 +3,6 @@ const { R } = require("redbean-node");
 const Monitor = require("../../model/monitor");
 const { log } = require("../../../src/util");
 
-// Import helper functions from server.js
-let startMonitor, pauseMonitor, updateMonitorNotification;
-
 // Import UptimeCalculator
 const { UptimeCalculator } = require("../../uptime-calculator");
 const Database = require("../../database");
@@ -61,14 +58,39 @@ function createMonitorsRouter(args) {
     const router = express.Router();
     const { io } = args;
 
-    // Get helper functions from UptimeKumaServer
+    // Get UptimeKumaServer instance for calling server methods
     const { UptimeKumaServer } = require("../../uptime-kuma-server");
     const server = UptimeKumaServer.getInstance();
 
-    // Import helper functions
-    startMonitor = server.startMonitor;
-    pauseMonitor = server.pauseMonitor;
-    updateMonitorNotification = server.updateMonitorNotification;
+    /**
+     * Start a monitor by adding it to the monitorList and starting it
+     * @param {number} userId - User ID (for ownership check)
+     * @param {number} monitorId - Monitor ID to start
+     * @returns {Promise<void>}
+     */
+    async function startMonitor(userId, monitorId) {
+        await R.exec("UPDATE monitor SET active = 1 WHERE id = ? AND user_id = ? ", [monitorId, userId]);
+        let monitorBean = await R.findOne("monitor", " id = ? ", [monitorId]);
+        if (monitorBean.id in server.monitorList) {
+            await server.monitorList[monitorBean.id].stop();
+        }
+        server.monitorList[monitorBean.id] = monitorBean;
+        await monitorBean.start(io);
+    }
+
+    /**
+     * Pause a monitor by stopping it and updating the database
+     * @param {number} userId - User ID (for ownership check)
+     * @param {number} monitorId - Monitor ID to pause
+     * @returns {Promise<void>}
+     */
+    async function pauseMonitor(userId, monitorId) {
+        await R.exec("UPDATE monitor SET active = 0 WHERE id = ? AND user_id = ? ", [monitorId, userId]);
+        if (monitorId in server.monitorList) {
+            await server.monitorList[monitorId].stop();
+            server.monitorList[monitorId].active = 0;
+        }
+    }
 
     /**
      * @api {get} /api/v1/monitors List all monitors
@@ -236,15 +258,27 @@ function createMonitorsRouter(args) {
 
             // Update notifications
             if (notificationIDList.length > 0) {
-                await updateMonitorNotification(bean.id, notificationIDList);
+                await R.exec("DELETE FROM monitor_notification WHERE monitor_id = ? ", [bean.id]);
+                for (let notificationID of notificationIDList) {
+                    let notificationBean = R.dispense("monitor_notification");
+                    notificationBean.monitor_id = bean.id;
+                    notificationBean.notification_id = notificationID;
+                    await R.store(notificationBean);
+                }
             }
 
-            // Send update to socket clients
-            await server.sendUpdateMonitorIntoList(null, bean.id, userId);
+            // Send update to socket clients (create fake socket for REST API)
+            const fakeSocket = { userID: userId };
+            await server.sendUpdateMonitorIntoList(fakeSocket, bean.id);
 
-            // Start monitor if active
+            // Start monitor if active - add to monitorList and start
             if (monitor.active !== false) {
-                await startMonitor(userId, bean.id);
+                let monitorBean = await R.findOne("monitor", " id = ? ", [bean.id]);
+                if (monitorBean.id in server.monitorList) {
+                    await server.monitorList[monitorBean.id].stop();
+                }
+                server.monitorList[monitorBean.id] = monitorBean;
+                await monitorBean.start(io);
             }
 
             log.info("api", `Created Monitor: ${bean.id} User ID: ${userId}`);
@@ -343,7 +377,7 @@ function createMonitorsRouter(args) {
 
             // Update notifications
             if (notificationIDList !== undefined) {
-                await updateMonitorNotification(bean.id, notificationIDList);
+                await server.updateMonitorNotification(bean.id, notificationIDList);
             }
 
             // Remove children if needed
@@ -352,7 +386,7 @@ function createMonitorsRouter(args) {
             }
 
             // Send update to socket clients
-            await server.sendUpdateMonitorIntoList(null, bean.id, userId);
+            await server.sendUpdateMonitorIntoList({ userID: userId }, bean.id);
 
             // Restart monitor
             if (monitor.active !== false) {
@@ -360,6 +394,7 @@ function createMonitorsRouter(args) {
             } else {
                 await pauseMonitor(userId, bean.id);
             }
+
 
             log.info("api", `Updated Monitor: ${bean.id} User ID: ${userId}`);
 
@@ -477,7 +512,7 @@ function createMonitorsRouter(args) {
             }
 
             await pauseMonitor(userId, monitorId);
-            await server.sendUpdateMonitorIntoList(null, monitorId, userId);
+            await server.sendUpdateMonitorIntoList({ userID: userId }, monitorId);
 
             log.info("api", `Paused Monitor: ${monitorId} User ID: ${userId}`);
 
@@ -522,7 +557,7 @@ function createMonitorsRouter(args) {
             }
 
             await startMonitor(userId, monitorId);
-            await server.sendUpdateMonitorIntoList(null, monitorId, userId);
+            await server.sendUpdateMonitorIntoList({ userID: userId }, monitorId);
 
             log.info("api", `Resumed Monitor: ${monitorId} User ID: ${userId}`);
 
@@ -606,7 +641,7 @@ function createMonitorsRouter(args) {
             ]);
 
             // Send update to socket clients
-            await server.sendUpdateMonitorIntoList(null, monitorId, userId);
+            await server.sendUpdateMonitorIntoList({ userID: userId }, monitorId);
 
             log.info("api", `Added Tag ${tagId} to Monitor ${monitorId} User ID: ${userId}`);
 
@@ -680,7 +715,7 @@ function createMonitorsRouter(args) {
             ]);
 
             // Send update to socket clients
-            await server.sendUpdateMonitorIntoList(null, monitorId, userId);
+            await server.sendUpdateMonitorIntoList({ userID: userId }, monitorId);
 
             log.info("api", `Updated Tag ${tagId} on Monitor ${monitorId} User ID: ${userId}`);
 
@@ -743,7 +778,7 @@ function createMonitorsRouter(args) {
             ]);
 
             // Send update to socket clients
-            await server.sendUpdateMonitorIntoList(null, monitorId, userId);
+            await server.sendUpdateMonitorIntoList({ userID: userId }, monitorId);
 
             log.info("api", `Removed Tag ${tagId} from Monitor ${monitorId} User ID: ${userId}`);
 

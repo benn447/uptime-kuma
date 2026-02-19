@@ -1,0 +1,15 @@
+apiVersion: monitoring.uptimekuma.io/v1alpha1
+kind: UptimeKumaMonitor
+metadata:
+  name: unraid-monitor
+  namespace: monitoring
+spec:
+  uptimeKumaConfigRef: uptime-kuma
+  name: Unraid Homepage
+  monitorType: http
+  url: http://10.0.0.15:80/
+  interval: 60
+  retryInterval: 60
+  maxRetries: 3
+  active: true
+  description: unraid

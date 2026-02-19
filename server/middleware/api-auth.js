@@ -1,4 +1,4 @@
-const { APIKey } = require("../model/api_key");
+const APIKey = require("../model/api_key");
 const { R } = require("redbean-node");
 
 /**
@@ -58,10 +58,13 @@ async function apiAuth(req, res, next) {
             });
         }
 
-        // Update last used timestamp (async, don't wait)
-        apiKeyBean.updateLastUsed().catch(err => {
-            console.error("Error updating API key last used:", err);
-        });
+        // Update last used timestamp if column exists (async, don't wait)
+        // Skip if last_used column doesn't exist in the database
+        if (typeof apiKeyBean.last_used !== 'undefined') {
+            apiKeyBean.updateLastUsed().catch(err => {
+                // Silently ignore - column might not exist in older schemas
+            });
+        }
 
         // Get user info
         const user = await R.load("user", apiKeyBean.user_id);

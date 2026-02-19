@@ -3,7 +3,12 @@
     "allow": [
       "WebFetch(domain:github.com)",
       "Bash(sqlite3:*)",
-      "Bash(npm run tsc:*)"
+      "Bash(npm run tsc:*)",
+      "Bash(docker push:*)",
+      "Bash(docker build:*)",
+      "Bash(ls:*)",
+      "Bash(kubectl get:*)",
+      "Bash(git log:*)"
     ]
   }
 }

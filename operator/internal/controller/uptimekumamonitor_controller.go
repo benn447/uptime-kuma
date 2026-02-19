@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -165,6 +166,19 @@ func (r *UptimeKumaMonitorReconciler) syncMonitor(ctx context.Context, monitor *
 		return fmt.Errorf("failed to build monitor config: %w", err)
 	}
 
+	// Re-fetch the latest version of the CR to avoid stale reads
+	latestMonitor := &monitoringv1alpha1.UptimeKumaMonitor{}
+	if err := r.Get(ctx, types.NamespacedName{Name: monitor.Name, Namespace: monitor.Namespace}, latestMonitor); err != nil {
+		return fmt.Errorf("failed to re-fetch monitor CR: %w", err)
+	}
+
+	// Use the latest status to avoid race conditions
+	if latestMonitor.Status.MonitorID != 0 {
+		logger.Info("Monitor already created by concurrent reconciliation, skipping", "monitorId", latestMonitor.Status.MonitorID)
+		monitor.Status.MonitorID = latestMonitor.Status.MonitorID
+		return r.updateMonitorStatus(ctx, monitor, kumaClient)
+	}
+
 	// Create or update monitor
 	if monitor.Status.MonitorID == 0 {
 		// Create new monitor
@@ -176,7 +190,19 @@ func (r *UptimeKumaMonitorReconciler) syncMonitor(ctx context.Context, monitor *
 
 		// Update status with MonitorID
 		monitor.Status.MonitorID = monitorID
+		latestMonitor.Status.MonitorID = monitorID
 		logger.Info("Created monitor", "monitorId", monitorID)
+
+		// Immediately persist status to prevent duplicate creation
+		// This is critical - if it fails, we should clean up and retry
+		if err := r.Status().Update(ctx, latestMonitor); err != nil {
+			logger.Error(err, "Failed to update status with MonitorID - cleaning up monitor")
+			// Clean up the monitor we just created
+			if delErr := kumaClient.DeleteMonitor(ctx, monitorID, false); delErr != nil {
+				logger.Error(delErr, "Failed to delete monitor after status update failure")
+			}
+			return fmt.Errorf("failed to update status with MonitorID: %w", err)
+		}
 
 		// Sync tags after creation
 		if err := r.syncTags(ctx, monitor, kumaClient); err != nil {
